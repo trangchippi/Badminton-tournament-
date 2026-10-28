@@ -40,7 +40,7 @@ h3{margin:14px 0 6px;font-size:17px}.mu{color:var(--mu);font-size:13px}.warn{col
 #fit .tb .r{display:flex;justify-content:space-between;align-items:center;gap:6px;height:37px;line-height:18px;padding:0 6px;background:rgba(255,255,255,.6)}
 #fit .tb .r span{overflow:hidden;min-width:0}#fit .tb .r span div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #fit .tb .r.win{background:#fff;font-weight:700;color:#0b6b3a}#fit .tb .r.vd span{text-decoration:line-through;opacity:.5}
-#fit .tb .r b{min-width:26px;text-align:right}#fit .tb.lv{outline:4px solid var(--y)}
+#fit .tb .r .sc{min-width:24px;flex:none;text-align:right}#fit .tb.lv{outline:4px solid var(--y)}
 #fit .qrc{position:absolute;display:flex;gap:22px;align-items:center;background:#fff;border:3px solid #0d47a1;border-radius:14px;padding:16px 20px;box-shadow:0 4px 14px rgba(0,0,0,.15)}#fit .qrc img{width:250px;height:250px;flex:none}#fit .qrc b{display:block;font-size:29px;line-height:1.15;color:#0d47a1;margin-bottom:10px}#fit .qrc span{font-size:20px;color:#5d7168}#fit .art{position:absolute;opacity:.5;mix-blend-mode:multiply;pointer-events:none}#fit .lvb{position:absolute;top:-17px;right:0;font-size:12px;font-style:normal;font-weight:700;background:var(--y);color:#1b2a38;padding:0 6px;border-radius:3px}
 #fit .champ{position:absolute;text-align:center;border:3px solid #c62828;border-radius:8px;background:#fff;height:128px;font-size:40px;line-height:1.1;padding-top:6px}
 #fit .champ div{background:#c62828;color:#fff;font-size:22px;font-weight:800;margin-top:2px}#fit .champ b{display:block;font-size:17px;padding:6px}
@@ -49,6 +49,11 @@ h3{margin:14px 0 6px;font-size:17px}.mu{color:var(--mu);font-size:13px}.warn{col
 #fit .big .grid{grid-template-columns:repeat(3,1fr);align-items:start;align-content:start}#fit .big .card{min-height:120px}
 .tvc{position:fixed;right:8px;bottom:8px;display:flex;gap:4px;opacity:.3}.tvc:hover{opacity:1}
 table{border-collapse:collapse;font-size:13px;background:#fff;width:100%}th,td{border:1px solid var(--ln);padding:4px 6px;text-align:left;vertical-align:top}th{background:#d3e6dc}tr.pl td{background:#fff6cf}td.wn{font-weight:700;color:#0b6b3a}
+.tid{color:var(--g)}.site{color:var(--mu);font-size:.85em}
+#fit .tb .r .tn{flex:1;min-width:0;overflow:hidden}#fit .tb .r .tn div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:18px}
+#fit .tb .r .tm{width:56px;flex:none;display:flex;flex-direction:column;line-height:18px;font-size:11px;text-align:right}#fit .tb .r .tm b{color:#0d47a1;font-size:12px}#fit .tb .r .tm i{font-size:10.5px;font-style:normal;color:#5d7168;white-space:nowrap}
+#fit .lg{position:absolute;text-align:center;height:32px;line-height:32px;background:rgba(255,255,255,.8);border-radius:8px;white-space:nowrap;overflow:hidden;color:#1b2a38}#fit .lg i{margin:0 10px;color:#5d7168;font-style:normal}#fit .lg b{color:#0d47a1}
+.lgp{margin-top:14px;font-size:12px;color:var(--mu)}.lgp b{color:var(--ink)}
 </style></head><body><div id="app"></div>
 <script>
 const SRC='<!doctype html>\n'+document.documentElement.outerHTML;
@@ -64,7 +69,17 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const save=()=>{if(!RO&&!TVW)try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const real=x=>!!x&&x!==BYE&&x!==WD,isVoid=x=>x===BYE||x===WD,nm=x=>x==null?'TBD':x;
 const name=(m,s)=>m[s]!=null?m[s]:(m.ph&&m.ph[s])||'TBD';
-const players=n=>real(n)?n.split(/\s*[\/&+]\s*/).map(s=>s.trim().toLowerCase()):[];
+function parseT(x){if(!real(x))return null;let id=null,body=String(x).trim(),site='';
+ const m1=body.match(/^([A-Za-z]{1,4}\d{1,3})_(.*)$/);if(m1){id=m1[1].toUpperCase();body=m1[2]}
+ const m2=body.match(/^(.*?)\s*_?\(([^)]*)\)\s*$/);if(m2){body=m2[1];site=m2[2]}
+ return{id,names:body.split(/\s*[&\/+]\s*/).map(t=>t.trim()).filter(Boolean),site}}
+const players=n=>{const t=parseT(n);return t?t.names.map(x=>x.toLowerCase()):[]};
+const fmt=x=>{const t=parseT(x);if(!t)return esc(x==null?'TBD':x);return (t.id?`<b class="tid">${esc(t.id)}</b> `:'')+esc(t.names.join(' & '))+(t.site?` <span class="site">(${esc(t.site)})</span>`:'')};
+const lab=x=>{const t=parseT(x);return t?(t.id?t.id+' ':'')+t.names.join(' & ')+(t.site?' ('+t.site+')':''):String(x)};
+const DEFLEG='CAP Capricorn\nTG CTD Toh Guan\nGUL Gul Circle\nMAR Marsiling\nTUAS Tuas\nGAL Galen\nJK Joo Koon';
+const legendItems=()=>(S.legend==null?DEFLEG:S.legend).split('\n').map(l=>l.match(/^\s*(\S+)(?:\s*[:–]\s*|\s+-\s+|\s+)(.+?)\s*$/)).filter(Boolean).map(m=>[m[1].replace(/:$/,''),m[2]]);
+const legendTV=(W,H)=>{const L=legendItems();if(!L.length)return'';const n=L.reduce((a,x)=>a+x[0].length+x[1].length+4,0),fs=Math.max(12,Math.min(18,Math.floor((W-120)/(n*.6))));return `<div class="lg" style="left:24px;width:${W-48}px;top:${H-LEG+6}px;font-size:${fs}px">${L.map(x=>`<b>${esc(x[0])}</b> ${esc(x[1])}`).join('<i>·</i>')}</div>`};
+const legendBar=()=>{const L=legendItems();return L.length?`<div class="lgp"><b>Sites:</b> ${L.map(x=>`<b>${esc(x[0])}</b> ${esc(x[1])}`).join(' · ')}</div>`:''};
 const get=id=>S.M.find(m=>m.id===id),catOf=id=>S.cats.find(c=>c.id===id),cname=m=>(catOf(m.cat)||{}).name||m.cat;
 const cn=id=>(S.courts.find(c=>c.id===id)||{}).name;
 const rname=t=>t===2?'Final':t===4?'Semi-final':t===8?'Quarter-final':'Round of '+t;
@@ -88,7 +103,7 @@ function build(){
   const pre=ps.slice(0,P).sort((x,y)=>x-y),isPre=new Set(pre);
   const R0=s=>[get(`${c.id}_0_${(s-1)>>1}`),(s-1)%2?'b':'a'];
   let e=0;for(let s=1;s<=T;s++)if(!isPre.has(s)){const[m,sd]=R0(s);m[sd]=p[e++]}
-  pre.forEach((s,k)=>{const[m,sd]=R0(s);mk(`${c.id}_P_${k}`,-1,k,{pre:1,a:p[e],b:p[e+1],nx:[m.id,sd]});e+=2;m.ph=m.ph||{};m.ph[sd]='Winner prelim '+(k+1)})
+  pre.forEach((s,k)=>{const[m,sd]=R0(s);mk(`${c.id}_P_${k}`,-1,k,{pre:1,a:p[e],b:p[e+1],nx:[m.id,sd]});e+=2;m.ph=m.ph||{};{const ta=parseT(p[e-2]),tb=parseT(p[e-1]);m.ph[sd]=ta&&tb&&ta.id&&tb.id?'Winner '+ta.id+' v '+tb.id:'Winner prelim '+(k+1)}})
  })}
 function finish(m,w,sa,sb,wo){
  m.w=w;m.sa=sa;m.sb=sb;m.wo=wo||null;m.st='done';m.end=Date.now();
@@ -121,7 +136,7 @@ function res(id,side,cid){const m=get(id),w=side==='a'?m.a:m.b;
   if(ws<=ls)return alert('The winner must have more points than the other team.');
   if(ws>30)return alert('The game ends at 30 points.');
   if(ws<30&&!confirm('Winner has only '+ws+' points (game is to 30). Save anyway?'))return}
- if(!confirm(w+' won'+(sa!=null&&sb!=null?', '+sa+'-'+sb:'')+'?'))return;
+ if(!confirm(lab(w)+' won'+(sa!=null&&sb!=null?', '+sa+'-'+sb:'')+'?'))return;
  mut(()=>finish(m,w,sa,sb))}
 const back=id=>mut(()=>{const m=get(id),c=S.courts.find(c=>c.id===m.court);if(c)c.m=null;m.court=null;m.st='wait';m.hold=1});
 const addCourt=()=>mut(()=>{const n=Math.max(0,...S.courts.map(c=>c.id))+1;S.courts.push({id:n,name:'Court '+n,open:true,m:null})});
@@ -145,6 +160,10 @@ function wd(){const t=(prompt('Who is withdrawing? Type a player name. Every unf
 function ren(){const o=prompt('Substitute: replace which name?');if(!o)return;const n=prompt('With:');if(n===null)return;
  if(S.M.some(m=>(m.st==='done'||m.st==='court')&&!m.wo&&[m.a,m.b].some(x=>real(x)&&x.includes(o)))&&!confirm('That team has already played. Substitution normally needs organizer approval. Continue?'))return;
  mut(()=>{S.M.forEach(m=>['a','b'].forEach(s=>{if(real(m[s]))m[s]=m[s].split(o).join(n)}));S.cats.forEach(c=>c.txt=c.txt.split(o).join(n))})}
+function distribute(){const v=document.getElementById('allt').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!v.length)return;
+ const g={},bad=[];v.forEach(l=>{const m=l.match(/^([A-Za-z]+)\d+_/),c=m&&S.cats.find(c=>c.id===m[1][0].toUpperCase());if(c)(g[c.id]=g[c.id]||[]).push(l);else bad.push(l)});
+ if(bad.length&&!confirm(bad.length+' line(s) could not be matched to a category and will be skipped:\n'+bad.slice(0,5).join('\n')+'\nContinue?'))return;
+ mut(()=>{S.cats.forEach(c=>{if(g[c.id])c.txt=g[c.id].join('\n')})})}
 function draw(){if(S.M.some(m=>m.st==='done'&&!m.wo)&&!confirm('This clears all results and rebuilds the brackets. Continue?'))return;mut(build);view='desk';render()}
 
 /* ---------- files ---------- */
@@ -160,14 +179,14 @@ function courtsHTML(ro){return '<div class="grid">'+S.courts.filter(c=>!ro||c.op
  let h=`<div class="card ${m?'live':''} ${c.open?'':'off'}"><div class="ct"><span>${esc(c.name)}</span>`+(ro?'':`<span><button class="s" onclick="renC(${c.id})">Rename</button> <button class="s" onclick="togC(${c.id})">${c.open?'Close':'Open'}</button></span>`)+'</div>';
  if(!c.open)h+='<div class="mu">Closed</div>';else if(!m)h+='<div class="mu">Free</div>';
  else{h+=`<div class="mu">${matchLine(m)}, ${Math.round((Date.now()-m.t)/60000)} min</div>`;
-  ['a','b'].forEach(s=>h+=`<div class="vs"><span>${esc(m[s])}</span>`+(ro?'':`<input type="number" min="0" max="30" id="s${s}_${m.id}" placeholder="pts"><button class="g s" onclick="res('${m.id}','${s}',${c.id})">Won</button>`)+'</div>');
+  ['a','b'].forEach(s=>h+=`<div class="vs"><span>${fmt(m[s])}</span>`+(ro?'':`<input type="number" min="0" max="30" id="s${s}_${m.id}" placeholder="pts"><button class="g s" onclick="res('${m.id}','${s}',${c.id})">Won</button>`)+'</div>');
   if(!ro)h+=`<div class="row"><button class="s" onclick="back('${m.id}')">Send back to queue</button></div>`}
  return h+'</div>'}).join('')+'</div>'}
 function nextHTML(ro,n){const L=queue(),free=S.courts.filter(c=>c.open&&!c.m);
- return `<h3>Next up (${L.length} ready)</h3>`+(L.slice(0,n).map(({m,why},i)=>`<div class="q ${why?'blk':''}"><span class="n">${i+1}</span><div class="f"><div class="mu">${matchLine(m)}</div>${esc(m.a)} <i>vs</i> ${esc(m.b)}${why?`<div class="warn">${why}</div>`:''}</div>`+
+ return `<h3>Next up (${L.length} ready)</h3>`+(L.slice(0,n).map(({m,why},i)=>`<div class="q ${why?'blk':''}"><span class="n">${i+1}</span><div class="f"><div class="mu">${matchLine(m)}</div>${fmt(m.a)} <i>vs</i> ${fmt(m.b)}${why?`<div class="warn">${why}</div>`:''}</div>`+
   (ro||!free.length?'':`<select onchange="asg('${m.id}',this.value)"><option value="">Assign to…</option>${free.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>`)+'</div>').join('')||'<div class="mu">No match is ready yet.</div>')}
 function box(m,ro){const hl=x=>q&&real(x)&&x.toLowerCase().includes(q.toLowerCase())?' hl':'';
- const sd=s=>{const x=m[s],sc=s==='a'?m.sa:m.sb;return `<div class="sd${m.st==='done'&&m.w===x?' win':''}${isVoid(x)?' void':''}${hl(x)}"><span>${esc(name(m,s))}</span>${sc!=null?`<b>${sc}</b>`:''}</div>`};
+ const sd=s=>{const x=m[s],sc=s==='a'?m.sa:m.sb;return `<div class="sd${m.st==='done'&&m.w===x?' win':''}${isVoid(x)?' void':''}${hl(x)}"><span>${fmt(name(m,s))}</span>${sc!=null?`<b>${sc}</b>`:''}</div>`};
  return `<div class="bx ${m.st}"><div class="mu">${rl(m)}${m.st==='court'?', '+esc(cn(m.court)):''}${m.wo==='W/O'?', walkover':''}</div>${sd('a')}${sd('b')}${ro?'':`<button class="e" onclick="editM('${m.id}')">Edit</button>`}</div>`}
 function bracketHTML(c,ro){const ms=S.M.filter(m=>m.cat===c.id);if(!ms.length)return'';const R=ms[0].R,lo=ms.some(m=>m.pre)?-1:0;let h=`<h3>${esc(c.name)}</h3><div class="br">`;
  for(let r=lo;r<R;r++)h+='<div class="col">'+ms.filter(m=>m.r===r&&!m.bronze).sort((a,b)=>a.i-b.i).map(m=>box(m,ro)).join('')+(r===R-1?ms.filter(m=>m.bronze).map(m=>box(m,ro)).join(''):'')+'</div>';
@@ -176,11 +195,12 @@ function brHTML(ro){if(!S.M.length)return'<p class="mu">No brackets yet. Go to S
  return `<div class="chips"><button class="${bc==='all'?'on':''}" onclick="bc='all';render()">All</button>`+S.cats.map(c=>`<button class="${bc===c.id?'on':''}" onclick="bc='${c.id}';render()">${esc(c.name)}</button>`).join('')+'</div>'+S.cats.filter(c=>bc==='all'||bc===c.id).map(c=>bracketHTML(c,ro)).join('')}
 function findHTML(){const k=q.trim().toLowerCase();if(!k)return'<p class="mu">Type your name to see your matches.</p>';
  const L=S.M.filter(m=>[m.a,m.b].some(x=>real(x)&&x.toLowerCase().includes(k)));
- return L.map(m=>`<div class="q"><div class="f"><div class="mu">${matchLine(m)}</div>${esc(name(m,'a'))} <i>vs</i> ${esc(name(m,'b'))}<div class="mu">${m.st==='done'?'Finished'+(m.sa!=null?', '+m.sa+'-'+m.sb:m.wo?', walkover':''):m.st==='court'?'On '+esc(cn(m.court)):'Waiting'}</div></div></div>`).join('')||'<p class="mu">No match found.</p>'}
+ return L.map(m=>`<div class="q"><div class="f"><div class="mu">${matchLine(m)}</div>${fmt(name(m,'a'))} <i>vs</i> ${fmt(name(m,'b'))}<div class="mu">${m.st==='done'?'Finished'+(m.sa!=null?', '+m.sa+'-'+m.sb:m.wo?', walkover':''):m.st==='court'?'On '+esc(cn(m.court)):'Waiting'}</div></div></div>`).join('')||'<p class="mu">No match found.</p>'}
 const cnt=v=>{const n=v.split('\n').filter(s=>s.trim()).length;if(n<2)return n+' pairs';const{T,P}=plan(n);return `${n} pairs: ${P?P+' preliminary match'+(P>1?'es':'')+', then ':''}${rname(T)}`};
 function setupHTML(){return `<div class="card"><input class="t" value="${esc(S.title)}" onchange="S.title=this.value;save()"><label>Rest between a player's matches (minutes) <input type="number" min="0" style="width:70px" value="${S.rest}" onchange="S.rest=+this.value||0;save()"></label></div><p class="mu">Enter pairs in draw order, position 1 first. With an odd count, the last pairs in the list play the preliminary matches (for 17 pairs, positions 16 and 17).</p>`+
- S.cats.map((c,k)=>`<div class="card"><input class="t" value="${esc(c.name)}" onchange="S.cats[${k}].name=this.value;save()"><textarea placeholder="One pair per line, e.g.\nAlice Tan / Bob Lim" oninput="S.cats[${k}].txt=this.value;save();document.getElementById('cn${k}').textContent=cnt(this.value)">${esc(c.txt)}</textarea><div class="mu" id="cn${k}">${cnt(c.txt)}</div></div>`).join('')+
- `<div class="tools"><button onclick="mut(()=>S.cats.push({id:'c'+S.cats.length,name:'New category',txt:''}))">Add category</button><button class="g" onclick="draw()">Build brackets</button></div><p class="mu">Write "Name1 / Name2" so a player in two categories is never sent to two courts at once.</p>`}
+ `<div class="card"><b>Paste all teams</b><textarea id="allt" style="height:110px" placeholder="Paste every team here, one per line, e.g.
+MD01_Chee Wee & Ryan_(CAP)"></textarea><div class="tools"><button onclick="distribute()">Sort into categories</button><span class="mu">MD goes to Men's, XD to Mixed, WD to Women's. The order you paste is kept.</span></div></div>`+S.cats.map((c,k)=>`<div class="card"><input class="t" value="${esc(c.name)}" onchange="S.cats[${k}].name=this.value;save()"><textarea placeholder="One pair per line, e.g.\nAlice Tan / Bob Lim" oninput="S.cats[${k}].txt=this.value;save();document.getElementById('cn${k}').textContent=cnt(this.value)">${esc(c.txt)}</textarea><div class="mu" id="cn${k}">${cnt(c.txt)}</div></div>`).join('')+
+ `<div class="card"><b>Site legend</b> <span class="mu">one per line: code, then name. Shown on every screen.</span><textarea style="height:130px" oninput="S.legend=this.value;save()">${esc(S.legend==null?DEFLEG:S.legend)}</textarea></div><div class="tools"><button onclick="mut(()=>S.cats.push({id:'c'+S.cats.length,name:'New category',txt:''}))">Add category</button><button class="g" onclick="draw()">Build brackets</button></div><p class="mu">Write "Name1 / Name2" so a player in two categories is never sent to two courts at once.</p>`}
 function deskHTML(){return `<div class="tools"><button onclick="doUndo()">Undo</button><label><input type="checkbox" ${S.auto?'checked':''} onchange="S.auto=this.checked;mut(()=>{})"> Auto-fill free courts</label><button onclick="fillNow()">Fill now</button><button onclick="wd()">Withdrawal</button><button onclick="ren()">Substitute player</button><button onclick="addCourt()">Add court</button><button onclick="backup()">Backup</button><label class="mu">Restore <input type="file" accept=".json" onchange="restore(this)"></label><button onclick="snap()">Phone snapshot</button><button onclick="pub()">Export data.json</button></div>`+courtsHTML(0)+nextHTML(0,12)}
 
 /* ---------- TV ---------- */
@@ -189,16 +209,19 @@ const pl=x=>String(x==null?'':x).split(/\s*[\/&+]\s*/).map(t=>`<div>${esc(t)}</d
 const SH='<svg viewBox="0 0 34 34" width="50" height="50" style="vertical-align:middle"><g stroke="#fff" stroke-width="2.2" fill="none"><path d="M3 9L8 3L15 1L22 2L28 5"/><path d="M26 26L3 9M26 26L8 3M26 26L15 1M26 26L22 2M26 26L28 5"/></g><circle cx="27" cy="27" r="6" fill="#fff"/></svg>';
 const bnBg=t=>`background:linear-gradient(90deg,#0b1d3a,${t} 25%,${t} 75%,#0b1d3a)`,logo=()=>`<img src="${IMG.logo}" style="position:absolute;left:0;top:0;height:84px">`;
 const fitHTML=o=>`<div id="fit" data-w="${o.W}" data-h="${o.H}" style="width:${o.W}px;height:${o.H}px">${o.h}</div>`;
+function tvName(v,w){const t=parseT(v);if(!t)return `<span class="tn">${esc(v==null?'TBD':v)}</span>`;
+ const ls=t.names.length>1?[t.names[0]+' &',...t.names.slice(1)]:t.names,L=Math.max(...ls.map(l=>l.length)),av=w-18-56-24-14,fs=Math.max(10,Math.min(15,Math.floor(av/(.55*L))));
+ return `<span class="tn" style="font-size:${fs}px">${ls.map(l=>`<div>${esc(l)}</div>`).join('')}</span><span class="tm"><b>${esc(t.id||'')}</b>${t.site?`<i>${esc(t.site)}</i>`:''}</span>`}
 function tvBox(m,x,y,w,d){const col=PAL[Math.min(d,5)];
  const row=s=>{const v=m[s],sc=s==='a'?m.sa:m.sb,win=m.st==='done'&&m.w===v&&real(v);
-  return `<div class="r${win?' win':''}${isVoid(v)?' vd':''}"><span>${real(v)?pl(v):esc(name(m,s))}</span><b>${win&&m.wo==='W/O'?'W/O':sc!=null?sc:''}</b></div>`};
+  return `<div class="r${win?' win':''}${isVoid(v)?' vd':''}">${real(v)?tvName(v,w):`<span class="tn">${esc(name(m,s))}</span>`}<b class="sc">${win&&m.wo==='W/O'?'W/O':sc!=null?sc:''}</b></div>`};
  return `<div class="tb${m.st==='court'?' lv':''}" style="left:${x}px;top:${y-39}px;width:${w}px;background:${col}">${m.st==='court'?`<i class="lvb">${esc(cn(m.court))}</i>`:''}${row('a')}${row('b')}</div>`}
-const TOP=180,PT=112,CW=250,G=26,bw=r=>r===0?215:200;
+const TOP=180,PT=112,CW=260,PW=260,G=22,LEG=44,bw=r=>r===0?260:235;
 function tvDims(cs,u){const L=[];cs.forEach(c=>{const ms=S.M.filter(m=>m.cat===c.id);if(!ms.length)return;const R=ms[0].R,hh=(R>=2?2**(R-2):1)*PT;let Lw=0;for(let r=0;r<R-1;r++)Lw+=bw(r)+G;
   L.push({hh,W0:48+2*Lw+CW,pre:ms.filter(m=>m.pre).length,bm:ms.some(m=>m.bronze)})});
- const W=Math.max(u?1920:900,...L.map(x=>x.W0)),FY=Math.max(TOP+410,...L.map(x=>TOP+x.hh/2)),cnt=Math.max(1,Math.floor((W-24)/(CW+24)));
+ const W=Math.max(u?1920:900,...L.map(x=>x.W0)),FY=Math.max(TOP+410,...L.map(x=>TOP+x.hh/2)),cnt=Math.max(1,Math.floor((W-24)/(PW+24)));
  const mb=x=>Math.max(FY+x.hh/2+10,x.bm?FY+169:FY+60),y0=Math.max(0,...L.filter(x=>x.pre).map(mb))+30;
- const H=Math.max(u?1080:0,...L.map(x=>x.pre?y0+100+(Math.ceil(x.pre/cnt)-1)*104+39+30:mb(x)+30));
+ const H=Math.max(u?1080:0,...L.map(x=>x.pre?y0+100+(Math.ceil(x.pre/cnt)-1)*104+39+30:mb(x)+30))+(u?LEG:0);
  return{W,H,FY,y0,cnt}}
 function tvB(c,k,list,u){
  const ms=S.M.filter(m=>m.cat===c.id);if(!ms.length)return null;
@@ -216,19 +239,20 @@ function tvB(c,k,list,u){
    p+=el(x1,y,x2,ty)}}
  const fm=ms.find(m=>m.r===R-1&&!m.bronze&&!m.pre),bm=ms.find(m=>m.bronze);
  h+=hd(cx,CW,'FINAL',PAL[0])+tvBox(fm,cx,FY,CW,0);
- h+=`<div class="champ" style="left:${cx}px;top:${FY-180}px;width:${CW}px">🏆<div>CHAMPION</div><b>${fm.st==='done'&&real(fm.w)?esc(fm.w):'-'}</b></div>`;
+ h+=`<div class="champ" style="left:${cx}px;top:${FY-180}px;width:${CW}px">🏆<div>CHAMPION</div><b>${fm.st==='done'&&real(fm.w)?fmt(fm.w):'-'}</b></div>`;
  if(bm)h+=`<div class="cl" style="left:${cx}px;width:${CW}px;top:${FY+50}px;color:${th}">3RD PLACE MATCH</div>`+tvBox(bm,cx,FY+130,CW,1);
  if(pre.length){const y0=D.y0,cnt=D.cnt;
   h+=`<div style="position:absolute;left:24px;top:${y0}px;width:${W-48}px;height:3px;background:${th};opacity:.7"></div><div class="cl" style="left:0;width:${W}px;top:${y0+9}px;color:${th}">PRELIMINARY ROUND · winners advance to ${rname(2**R)}</div>`;
-  pre.forEach((m,i)=>{const row=Math.floor(i/cnt),inRow=Math.min(cnt,pre.length-row*cnt),x0=(W-(inRow*CW+(inRow-1)*24))/2,x=x0+(i-row*cnt)*(CW+24),ry=y0+100+row*104;
-   h+=`<div class="pn" style="left:${x}px;top:${ry-57}px;color:${th}">PRELIM ${i+1}</div>`+tvBox(m,x,ry,CW,5)})}
+  pre.forEach((m,i)=>{const row=Math.floor(i/cnt),inRow=Math.min(cnt,pre.length-row*cnt),x0=(W-(inRow*PW+(inRow-1)*24))/2,x=x0+(i-row*cnt)*(PW+24),ry=y0+100+row*104;
+   h+=`<div class="pn" style="left:${x}px;top:${ry-57}px;color:${th}">PRELIM ${i+1}</div>`+tvBox(m,x,ry,PW,5)})}
  let art='';
  if(IMG.bot[k])art+=`<img class="art" src="${IMG.bot[k]}" style="left:0;top:${Math.max(0,H-W*IMG.br[k])}px;width:${W}px">`;
  if(IMG.art[k]){const zx=R>=2?xL(R-2):PD,zw=(R>=2?xR(R-2)+bw(R-2):W-PD)-zx,zy=TOP+4,zh=FY-190-zy,r=IMG.r[k],ah=Math.min(zh,zw*.96/r),aw=ah*r;
   art+=`<img class="art" src="${IMG.art[k]}" style="left:${zx+(zw-aw)/2}px;top:${zy+(zh-ah)/2}px;width:${aw}px;height:${ah}px">`}
+ if(u!==false)h+=legendTV(W,H);
  return{W,H,h:`${art}<svg width="${W}" height="${H}" style="position:absolute;left:0;top:0"><path d="${p}" stroke="#1b2a38" stroke-width="2" fill="none"/></svg><div class="bn" style="${bnBg(th)};width:${W}px">${logo()}${SH} ${esc(c.name).toUpperCase()} · ${n} TEAMS ${SH}</div>${h}`}}
 const clock=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const tv0=D=>({W:D.W,H:D.H,h:`<img class="art" src="${IMG.wave}" style="left:0;top:${Math.max(0,D.H-D.W*.3335)}px;width:${D.W}px"><div class="bn" style="${bnBg('#0d47a1')};width:${D.W}px">${logo()}${SH} ${esc(S.title)} ${SH}<span>${clock()}</span></div><div class="big two" style="width:${D.W}px">${courtsHTML(1)}<div>${nextHTML(1,5)}</div></div><div class="qrc" style="right:30px;bottom:24px;width:${Math.round((D.W-80)/3)}px"><img src="${IMG.qr}"><div><b>SCAN TO VIEW THE TOURNAMENT DASHBOARD</b><span>Live courts, next matches, brackets and your own match</span></div></div>`});
+const tv0=D=>({W:D.W,H:D.H,h:`<img class="art" src="${IMG.wave}" style="left:0;top:${Math.max(0,D.H-D.W*.3335)}px;width:${D.W}px"><div class="bn" style="${bnBg('#0d47a1')};width:${D.W}px">${logo()}${SH} ${esc(S.title)} ${SH}<span>${clock()}</span></div><div class="big two" style="width:${D.W}px">${courtsHTML(1)}<div>${nextHTML(1,5)}</div></div><div class="qrc" style="right:30px;bottom:74px;width:${Math.round((D.W-80)/3)}px"><img src="${IMG.qr}"><div><b>SCAN TO VIEW THE TOURNAMENT DASHBOARD</b><span>Live courts, next matches, brackets and your own match</span></div></div>${legendTV(D.W,D.H)}`});
 function tvHTML(){const sl=[null,...S.cats.filter(c=>S.M.some(m=>m.cat===c.id))],i=tvI%sl.length,o=sl[i]?tvB(sl[i],S.cats.indexOf(sl[i])):tv0(tvDims(S.cats,true));
  return `${fitHTML(o)}<div class="tvc"><button onclick="tvS(-1)">◀</button><button onclick="tvP=!tvP;render()">${tvP?'Play':'Pause'}</button><button onclick="tvS(1)">▶</button><button onclick="tvZ(-.05)">−</button><button onclick="S.tvz=1;save();fitTV()">Fit ${Math.round((S.tvz||1)*100)}%</button><button onclick="tvZ(.05)">+</button>${TVW||TVV?'':'<button onclick="view=\'desk\';render()">Exit</button>'}</div>`}
 function fitTV(){const f=$('#fit');if(!f)return;const W=+f.dataset.w,H=+f.dataset.h,k=Math.min(innerWidth/W,innerHeight/H)*(S.tvz||1);
@@ -242,7 +266,7 @@ const logRows=()=>S.M.slice().sort((a,b)=>(a.t||1e15)-(b.t||1e15)||S.cats.findIn
 const scoreT=m=>m.wo==='W/O'?'W/O':m.sa!=null&&m.sb!=null?m.sa+'-'+m.sb:'';
 function logHTML(){const L=logRows(),ds=L.filter(m=>dur(m)!==''),avg=ds.length?Math.round(ds.reduce((x,m)=>x+dur(m),0)/ds.length):0;
  const tm=m=>m.t?fmtT(m.t)+(m.end&&!m.wo?' to '+fmtT(m.end)+' ('+dur(m)+' min)':''):'';
- const tn=(m,s)=>{const x=name(m,s),w=m.st==='done'&&m.w===x&&real(x);return `<td class="${w?'wn':''}">${w?'✓ ':''}${esc(x)}</td>`};
+ const tn=(m,s)=>{const x=name(m,s),w=m.st==='done'&&m.w===x&&real(x);return `<td class="${w?'wn':''}">${w?'✓ ':''}${fmt(x)}</td>`};
  return `<div class="tools"><b>${L.filter(m=>m.st==='done').length} of ${L.length} matches finished</b><span class="mu">average ${avg} min</span><button onclick="csv()">Export CSV</button><button onclick="doUndo()">Undo</button></div><table><tr><th style="width:10%">Match</th><th>Team A</th><th>Team B</th><th style="width:7%">Court</th><th style="width:14%">Time</th><th style="width:6%">Score</th><th style="width:8%">Status</th><th style="width:9%"></th></tr>`+
  L.map(m=>`<tr class="${m.st==='court'?'pl':''}"><td>${esc(cname(m))}<br><span class="mu">${rl(m)}</span></td>${tn(m,'a')}${tn(m,'b')}<td>${esc(m.st==='court'?cn(m.court):m.ct||'')}</td><td>${tm(m)}</td><td>${scoreT(m)}</td><td>${m.st==='done'?(m.wo?'Walkover':'Done'):m.st==='court'?'Playing':'Waiting'}</td><td>${m.st==='done'?`<button class="s" title="Change scores, winner, minutes" onclick="fixM('${m.id}')">Fix</button> `:''}<button class="s" title="Change the teams and reopen" onclick="editM('${m.id}')">Edit</button></td></tr>`).join('')+'</table><p class="mu">✓ marks the winner. Fix changes scores, winner and minutes played. Edit changes the two teams and reopens the match. The TV updates straight away.</p>'}
 function fixM(id){const m=get(id);if(m.st!=='done')return;
@@ -270,7 +294,7 @@ function render(){const app=$('#app');document.body.className=view==='tv'?'tvm':
  const T=RO?[['courts','Courts'],['next','Next up'],['br','Brackets'],['tvb','Bracket (TV style)'],['find','Find me']]:[['desk','Desk'],['br','Brackets'],['tvb','Bracket (TV style)'],['log','Data log'],['setup','Setup']];
  let h='<nav>'+T.map(t=>`<button class="${view===t[0]?'on':''}" onclick="view='${t[0]}';render()">${t[1]}</button>`).join('')+(RO?'':`<button onclick="openTV()">TV in new window</button><button onclick="view='tv';tvI=0;render();(document.documentElement.requestFullscreen||(()=>0)).call(document.documentElement)">TV in this window</button>`)+'</nav>';
  if(RO&&S.ts)h+=`<div class="mu">Updated ${new Date(S.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}. This page refreshes itself.</div>`;
- h+=({desk:deskHTML,setup:setupHTML,tvb:brTV,log:logHTML,courts:()=>courtsHTML(1),next:()=>nextHTML(1,20),br:()=>brHTML(RO),find:()=>`<input placeholder="Your name" value="${esc(q)}" oninput="q=this.value;document.getElementById('res').innerHTML=findHTML()"><div id="res">${findHTML()}</div>`})[view]();
+ h+=({desk:deskHTML,setup:setupHTML,tvb:brTV,log:logHTML,courts:()=>courtsHTML(1),next:()=>nextHTML(1,20),br:()=>brHTML(RO),find:()=>`<input placeholder="Your name" value="${esc(q)}" oninput="q=this.value;document.getElementById('res').innerHTML=findHTML()"><div id="res">${findHTML()}</div>`})[view]();h+=legendBar();
  app.innerHTML=h;fitView();for(const id in keep){const i=document.getElementById(id);if(i)i.value=keep[id]}}
 document.onkeydown=e=>{if(view!=='tv')return;if(e.key==='Escape'&&!TVW&&!TVV){view=RO?'courts':'desk';render()}if(e.key==='ArrowRight')tvS(1);if(e.key==='ArrowLeft')tvS(-1)};
 onresize=()=>{fitTV();fitView()};
