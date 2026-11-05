@@ -80,13 +80,20 @@ table{border-collapse:collapse;font-size:13px;background:#fff;width:100%}th,td{b
 #fit .glow{position:absolute;border-radius:2.2%;box-shadow:inset 0 0 60px rgba(255,236,150,.95);animation:pulse 2.8s ease-in-out infinite;pointer-events:none}
 @keyframes pulse{0%,100%{opacity:.2}50%{opacity:.9}}
 #fit .lg.dk{background:rgba(6,20,52,.72);color:#e8f0ff}#fit .lg.dk b{color:#ffd54a}#fit .lg.dk i{color:#9fb3d9}
+.card.pr{background:#e6f5e8;border-color:#2e7d32}.prt{font-weight:700;color:#1b5e20}.prt span{display:block;font-weight:600;font-size:.85em;color:#2e7d32}
+.pace{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-bottom:10px}.pace .card{margin:0}.pace b{font-size:17px}
+.bar{height:12px;background:#dfe8e2;border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--g)}
+.st-ok{color:#1b7a3a}.st-tight{color:#b8860b}.st-bad{color:#b83a2e}.pace p{margin:4px 0}
+img.inf{max-width:100%;border-radius:8px;margin-top:8px;display:block}.hfph{color:#fff;font-weight:800;padding:8px 12px;border-radius:6px;margin-bottom:6px}
+.hfr{padding:8px 4px;border-bottom:1px solid var(--ln)}.hfr>span{font-size:13px;color:var(--mu);font-weight:700}.hfv{font-size:20px;font-weight:700;margin-top:2px}
+#fit .card.pr{background:#e6f5e8;border-color:#2e7d32}
 </style></head><body><div id="app"></div>
 <script>
 const SRC='<!doctype html>\n'+document.documentElement.outerHTML;
 const BYE='BYE',WD='WITHDRAWN',KEY='bt-v2',SNAP=window.__SNAP__,RO=!!SNAP||location.hash.startsWith('#view'),TVV=location.hash==='#viewtv',TVW=location.hash==='#tv';
 let S=SNAP;
 if(!S&&!RO){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}}
-if(!S)S={title:'Badminton Tournament',courts:[1,2,3,4,5,6,7,8,9].map(n=>({id:n,name:'Court '+n,open:n<=5,m:null})),
+if(!S)S={title:'Badminton Tournament',courts:[1,2,3,4,5,6,7,8,9].map(n=>({id:n,name:'Court '+n,open:n<=7,m:null})),
  cats:[{id:'M',name:"Men's Doubles",txt:''},{id:'X',name:'Mixed Doubles',txt:''},{id:'W',name:"Women's Doubles",txt:''}],M:[],rest:10,last:{},auto:false,tvz:1};
 if(S.title==='Company Badminton Tournament')S.title='Badminton Tournament';
 let TVZ=1;try{TVZ=+localStorage.getItem('bt-tvz')||1}catch(e){}
@@ -148,13 +155,13 @@ function settle(){let ch=true,g=0;
 const busy=()=>new Set(S.courts.flatMap(c=>c.m?players(get(c.m).a).concat(players(get(c.m).b)):[]));
 const put=(m,c)=>{c.m=m.id;m.court=c.id;m.st='court';m.t=Date.now();m.hold=0};
 function queue(){const b=busy(),now=Date.now();
- const key=m=>m.r*2+(m.r===m.R-1&&!m.bronze?1:0);
- return S.M.filter(m=>m.st==='wait'&&real(m.a)&&real(m.b)).sort((x,y)=>key(x)-key(y)||S.cats.findIndex(c=>c.id===x.cat)-S.cats.findIndex(c=>c.id===y.cat)||x.i-y.i).map(m=>{
+ const key=m=>-(m.pre?m.R+1:m.bronze?1:m.R-m.r);
+ return S.M.filter(m=>m.st==='wait'&&real(m.a)&&real(m.b)).sort((x,y)=>key(x)-key(y)||x.r-y.r||S.cats.findIndex(c=>c.id===x.cat)-S.cats.findIndex(c=>c.id===y.cat)||x.i-y.i).map(m=>{
   const ps=[...players(m.a),...players(m.b)];let why='';const on=ps.filter(p=>b.has(p));
   if(m.hold)why='held (sent back)';else if(on.length)why='a player is still on court';
   else{const r=ps.reduce((x,p)=>Math.max(x,S.last[p]?S.rest-(now-S.last[p])/60000:0),0);if(r>0)why='resting, '+Math.ceil(r)+' min left'}
   return{m,why}})}
-function fill_(){S.courts.filter(c=>c.open&&!c.m).forEach(c=>{const x=queue().find(o=>!o.why);if(x)put(x.m,c)})}
+function fill_(){S.courts.filter(c=>c.open&&!c.pr&&!c.m).forEach(c=>{const x=queue().find(o=>!o.why);if(x)put(x.m,c)})}
 const fillNow=()=>mut(fill_);
 const asg=(id,cid)=>{if(cid)mut(()=>put(get(id),S.courts.find(c=>c.id==cid)))};
 function res(id,side,cid){const m=get(id),w=side==='a'?m.a:m.b;
@@ -168,6 +175,10 @@ function res(id,side,cid){const m=get(id),w=side==='a'?m.a:m.b;
  mut(()=>finish(m,w,sa,sb))}
 const back=id=>mut(()=>{const m=get(id),c=S.courts.find(c=>c.id===m.court);if(c)c.m=null;m.court=null;m.st='wait';m.hold=1});
 const addCourt=()=>mut(()=>{const n=Math.max(0,...S.courts.map(c=>c.id))+1;S.courts.push({id:n,name:'Court '+n,open:true,m:null})});
+function setMode(id,v){const c=S.courts.find(c=>c.id===id);if(c.m&&v!=='match'){alert('Finish or send the current match back first.');return render()}mut(()=>{c.open=v!=='closed';c.pr=v==='practice'})}
+function applyN(){const n=+document.getElementById('nmc').value;if(isNaN(n))return;mut(()=>{let k=0;S.courts.forEach(c=>{if(!c.open)return;if(c.m){k++;c.pr=false;return}c.pr=k>=n;if(!c.pr)k++})})}
+const allPr=()=>mut(()=>S.courts.forEach(c=>{if(c.open&&!c.m)c.pr=true}));
+function practiceLine(){const pc=S.courts.filter(c=>c.open&&c.pr),t=new Date(S.ts||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});return pc.length?`<div class="card pr"><b>Practice / friendly games:</b> ${pc.map(c=>esc(c.name)).join(', ')} free to use (as of ${t})</div>`:''}
 function renC(id){const c=S.courts.find(c=>c.id===id),n=prompt('Court name',c.name);if(n)mut(()=>c.name=n)}
 function togC(id){const c=S.courts.find(c=>c.id===id);if(c.m)return alert('Finish or send the current match back first.');mut(()=>c.open=!c.open)}
 
@@ -196,21 +207,21 @@ function draw(){if(S.M.some(m=>m.st==='done'&&!m.wo)&&!confirm('This clears all 
 
 /* ---------- files ---------- */
 function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
-const backup=()=>dl('badminton-backup.json',JSON.stringify(S),'application/json');
-const snap=()=>dl('badminton-phone-snapshot.html',SRC.replace('<script id="snap"><\/script>',()=>'<script>window.__SNAP__='+JSON.stringify({...S,ts:Date.now()}).replace(/</g,'\\u003c')+'<\/script>'),'text/html');
-function restore(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>mut(()=>{S=JSON.parse(t)}))}
+const backup=()=>dl('badminton-backup.json',JSON.stringify({...S,info:INFOD}),'application/json');
+const snap=()=>dl('badminton-phone-snapshot.html',SRC.replace('<script id="snap"><\/script>',()=>'<script>window.__SNAP__='+JSON.stringify({...S,info:INFOD,ts:Date.now()}).replace(/</g,'\\u003c')+'<\/script>'),'text/html');
+function restore(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>mut(()=>{S=JSON.parse(t);if(S.info){INFOD=S.info;saveInfo();delete S.info}}))}
 const openTV=()=>window.open(location.href.split('#')[0]+'#tv','bttv','width=1280,height=720');
 
 /* ---------- desk / phone views ---------- */
 const matchLine=m=>`<b>${esc(cname(m))}</b>, ${rl(m)}`;
-function courtsHTML(ro){return '<div class="grid">'+S.courts.filter(c=>!ro||c.open).map(c=>{const m=c.m&&get(c.m);
- let h=`<div class="card ${m?'live':''} ${c.open?'':'off'}"><div class="ct"><span>${esc(c.name)}</span>`+(ro?'':`<span><button class="s" onclick="renC(${c.id})">Rename</button> <button class="s" onclick="togC(${c.id})">${c.open?'Close':'Open'}</button></span>`)+'</div>';
- if(!c.open)h+='<div class="mu">Closed</div>';else if(!m)h+='<div class="mu">Free</div>';
+function courtsHTML(ro){return '<div class="grid">'+S.courts.filter(c=>!ro||c.open).map(c=>{const m=c.m&&get(c.m),pr=c.open&&c.pr;
+ let h=`<div class="card ${m?'live':''} ${c.open?'':'off'} ${pr?'pr':''}"><div class="ct"><span>${esc(c.name)}</span>`+(ro?'':`<span><button class="s" onclick="renC(${c.id})">Rename</button> <select onchange="setMode(${c.id},this.value)"><option value="match"${c.open&&!c.pr?' selected':''}>Match</option><option value="practice"${pr?' selected':''}>Practice</option><option value="closed"${c.open?'':' selected'}>Closed</option></select></span>`)+'</div>';
+ if(!c.open)h+='<div class="mu">Closed</div>';else if(pr)h+='<div class="prt">Practice / friendly games<span>Free to use</span></div>';else if(!m)h+='<div class="mu">Free</div>';
  else{h+=`<div class="mu">${matchLine(m)}, ${Math.round((Date.now()-m.t)/60000)} min</div>`;
   ['a','b'].forEach(s=>h+=`<div class="vs"><span>${fmt(m[s])}</span>`+(ro?'':`<input type="number" min="0" max="30" id="s${s}_${m.id}" placeholder="pts"><button class="g s" onclick="res('${m.id}','${s}',${c.id})">Won</button>`)+'</div>');
   if(!ro)h+=`<div class="row"><button class="s" onclick="back('${m.id}')">Send back to queue</button></div>`}
  return h+'</div>'}).join('')+'</div>'}
-function nextHTML(ro,n){const L=queue(),free=S.courts.filter(c=>c.open&&!c.m);
+function nextHTML(ro,n){const L=queue(),free=S.courts.filter(c=>c.open&&!c.pr&&!c.m);
  return `<h3>Next up (${L.length} ready)</h3>`+(L.slice(0,n).map(({m,why},i)=>`<div class="q ${why?'blk':''}"><span class="n">${i+1}</span><div class="f"><div class="mu">${matchLine(m)}</div>${fmt(m.a)} <i>vs</i> ${fmt(m.b)}${why?`<div class="warn">${why}</div>`:''}</div>`+
   (ro||!free.length?'':`<select onchange="asg('${m.id}',this.value)"><option value="">Assign to…</option>${free.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>`)+'</div>').join('')||'<div class="mu">No match is ready yet.</div>')}
 function box(m,ro){const hl=x=>q&&real(x)&&x.toLowerCase().includes(q.toLowerCase())?' hl':'';
@@ -228,8 +239,8 @@ const cnt=v=>{const L=v.split('\n').filter(s=>s.trim()),n=L.length,by=L.filter(i
 function setupHTML(){return `<div class="card"><input class="t" value="${esc(S.title)}" onchange="S.title=this.value;save()"><label>Rest between a player's matches (minutes) <input type="number" min="0" style="width:70px" value="${S.rest}" onchange="S.rest=+this.value||0;save()"></label></div><p class="mu">Enter pairs in draw order, position 1 first. With an odd count, the last pairs in the list play the preliminary matches (for 17 pairs, positions 16 and 17).</p>`+
  `<div class="card"><b>Paste all teams</b><textarea id="allt" style="height:110px" placeholder="Paste every team here, one per line, e.g.
 MD01_Chee Wee & Ryan_(CAP)"></textarea><div class="tools"><button onclick="distribute()">Sort into categories</button><span class="mu">MD goes to Men's, XD to Mixed, WD to Women's. The order you paste is kept.</span></div></div>`+S.cats.map((c,k)=>`<div class="card"><input class="t" value="${esc(c.name)}" onchange="S.cats[${k}].name=this.value;save()"><textarea placeholder="One pair per line, e.g.\nAlice Tan / Bob Lim" oninput="S.cats[${k}].txt=this.value;save();document.getElementById('cn${k}').textContent=cnt(this.value)">${esc(c.txt)}</textarea><div class="mu" id="cn${k}">${cnt(c.txt)}</div></div>`).join('')+
- `<div class="card"><b>Reminders for players</b> <span class="mu">one per line. Shown on a TV screen and on the phone page.</span><textarea style="height:150px" oninput="S.rem=this.value;save()">${esc(S.rem==null?DEFREM:S.rem)}</textarea></div><div class="card"><b>Site legend</b> <span class="mu">one per line: code, then name. Shown on every screen.</span><textarea style="height:130px" oninput="S.legend=this.value;save()">${esc(S.legend==null?DEFLEG:S.legend)}</textarea></div><div class="tools"><button onclick="mut(()=>S.cats.push({id:'c'+S.cats.length,name:'New category',txt:''}))">Add category</button><button class="g" onclick="draw()">Build brackets</button></div><p class="mu">Write "Name1 / Name2" so a player in two categories is never sent to two courts at once.</p>`}
-function deskHTML(){return `<div class="tools"><button onclick="doUndo()">Undo</button><label><input type="checkbox" ${S.auto?'checked':''} onchange="S.auto=this.checked;mut(()=>{})"> Auto-fill free courts</label><label><input type="checkbox" ${S.hof?'checked':''} onchange="S.hof=this.checked;mut(()=>{})"> Closing ceremony screen</label><button onclick="fillNow()">Fill now</button><button onclick="wd()">Withdrawal</button><button onclick="ren()">Substitute player</button><button onclick="addCourt()">Add court</button><button onclick="backup()">Backup</button><label class="mu">Restore <input type="file" accept=".json" onchange="restore(this)"></label><button onclick="snap()">Phone snapshot</button><button onclick="pub()">Export data.json</button></div>`+courtsHTML(0)+nextHTML(0,12)}
+ `<div class="card"><b>Time plan</b> <span class="mu">used by the pace panel on the desk</span><div class="tools"><label>Start <input type="time" value="${(S.plan||{}).start||'13:00'}" onchange="S.plan=Object.assign({},S.plan,{start:this.value});save()"></label><label>Matches should finish by <input type="time" value="${(S.plan||{}).end||'17:00'}" onchange="S.plan=Object.assign({},S.plan,{end:this.value});save()"></label><label>Courts booked per hour <input style="width:130px" value="${esc((S.plan||{}).courts==null?'7,9,7,6,2':S.plan.courts)}" onchange="S.plan=Object.assign({},S.plan,{courts:this.value});save()"></label><label>Planned minutes per match <input type="number" style="width:64px" value="${(S.plan||{}).avg||20}" onchange="S.plan=Object.assign({},S.plan,{avg:+this.value||20});save()"></label></div></div>`+infoEdit()+`<div class="card"><b>Reminders for players</b> <span class="mu">one per line. Shown on a TV screen and on the phone page.</span><textarea style="height:150px" oninput="S.rem=this.value;save()">${esc(S.rem==null?DEFREM:S.rem)}</textarea></div><div class="card"><b>Site legend</b> <span class="mu">one per line: code, then name. Shown on every screen.</span><textarea style="height:130px" oninput="S.legend=this.value;save()">${esc(S.legend==null?DEFLEG:S.legend)}</textarea></div><div class="tools"><button onclick="mut(()=>S.cats.push({id:'c'+S.cats.length,name:'New category',txt:''}))">Add category</button><button class="g" onclick="draw()">Build brackets</button></div><p class="mu">Write "Name1 / Name2" so a player in two categories is never sent to two courts at once.</p>`}
+function deskHTML(){return `<div class="tools"><button onclick="doUndo()">Undo</button><label><input type="checkbox" ${S.auto?'checked':''} onchange="S.auto=this.checked;mut(()=>{})"> Auto-fill free courts</label><label><input type="checkbox" ${S.hof?'checked':''} onchange="S.hof=this.checked;mut(()=>{})"> Closing ceremony screen</label><button onclick="fillNow()">Fill now</button><button onclick="wd()">Withdrawal</button><button onclick="ren()">Substitute player</button><button onclick="addCourt()">Add court</button><label>Match courts <input id="nmc" type="number" min="0" style="width:56px"></label><button onclick="applyN()">Apply</button><button onclick="allPr()">All practice</button><button onclick="backup()">Backup</button><label class="mu">Restore <input type="file" accept=".json" onchange="restore(this)"></label><button onclick="snap()">Phone snapshot</button><button onclick="pub()">Export data.json</button><button onclick="pubInfo()">Export info.json</button></div>`+paceHTML()+courtsHTML(0)+nextHTML(0,12)}
 
 /* ---------- TV ---------- */
 const PAL=['#f7c6dc','#fbd2b6','#fdeaa8','#c8e8cf','#c6dff6','#dde3ea'],THEME=['#0d47a1','#c8102e','#e8590c','#00796b','#5b2a8c'];
@@ -287,7 +298,20 @@ const clock=()=>new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit
 const tv0=D=>({W:D.W,H:D.H,h:`<img class="art" src="${IMG.wave}" style="left:0;top:${Math.max(0,D.H-D.W*.3335)}px;width:${D.W}px"><div class="bn" style="${bnBg('#0d47a1')};width:${D.W}px">${logo()}${SH} ${esc(S.title)} ${SH}<span>${clock()}</span></div><div class="big two" style="width:${D.W}px">${courtsHTML(1)}<div>${nextHTML(1,8)}</div></div>${legendTV(D.W,D.H)}`});
 const DEFREM='Players monitor the screen/website for their turn on warm-up courts and next matches.\nWarm-up is limited to 5 minutes per team.\nOld shuttles are used for warm-up and practice. New shuttles are used for official matches.\nPlayers stay back after their match to be referees for the next match.\nAll players gather at courts 23/24 for the closing ceremony and medal presentation.';
 const remItems=()=>(S.rem==null?DEFREM:S.rem).split('\n').map(x=>x.trim()).filter(Boolean);
-const infoHTML=()=>`<div class="card"><b>Reminders for players</b>${remItems().map(x=>`<p>${esc(x)}</p>`).join('')}</div>`;
+let INFOD=[];try{INFOD=JSON.parse(localStorage.getItem('bt-info')||'null')||[{t:'Court layout',txt:'Add the court layout picture here (Setup, Info page for phones).',img:[]}]}catch(e){}
+let INFO=null;const saveInfo=()=>{try{localStorage.setItem('bt-info',JSON.stringify(INFOD))}catch(e){alert('Could not save: the pictures are too big. Remove one.')}};
+const infoData=()=>RO?(S.info||INFO||[]):INFOD;
+const linkify=t=>esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
+const infoHTML=()=>`<div class="card"><b>Reminders for players</b>${remItems().map(x=>`<p>${esc(x)}</p>`).join('')}</div>`+infoData().map(x=>`<div class="card"><b>${esc(x.t)}</b>${x.txt?`<p>${linkify(x.txt)}</p>`:''}${(x.img||[]).map(u=>`<img class="inf" src="${u}">`).join('')}</div>`).join('');
+const pubInfo=()=>dl('info.json',JSON.stringify({info:INFOD}),'application/json');
+const infoSet=(i,k,v)=>{INFOD[i][k]=v;saveInfo()};
+const infoAdd=()=>{INFOD.push({t:'New section',txt:'',img:[]});saveInfo();render()};
+const infoDel=i=>{if(confirm('Remove this section?')){INFOD.splice(i,1);saveInfo();render()}};
+const infoRm=(i,j)=>{INFOD[i].img.splice(j,1);saveInfo();render()};
+function infoImg(inp,i){const f=inp.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);INFOD[i].img.push(c.toDataURL('image/jpeg',.8));saveInfo();render()};im.src=URL.createObjectURL(f)}
+const infoEdit=()=>`<div class="card"><b>Info page for phones</b> <span class="mu">Text and pictures (court layout, parking, contacts). After changes press Export info.json and upload it to GitHub once.</span></div>`+INFOD.map((x,i)=>`<div class="card"><input class="t" value="${esc(x.t)}" onchange="infoSet(${i},'t',this.value)"><textarea style="height:110px" oninput="infoSet(${i},'txt',this.value)">${esc(x.txt)}</textarea>${(x.img||[]).map((u,j)=>`<span style="position:relative;display:inline-block;margin:4px"><img src="${u}" style="height:70px;border-radius:6px"><button class="s" style="position:absolute;right:0;top:0" onclick="infoRm(${i},${j})">x</button></span>`).join('')}<div class="tools"><label>Add picture <input type="file" accept="image/*" onchange="infoImg(this,${i})"></label><button class="s" onclick="infoDel(${i})">Remove section</button></div></div>`).join('')+`<div class="tools"><button onclick="infoAdd()">Add section</button></div>`;
+const hofAvail=()=>!!(S.hof||S.cats.some(c=>podium(c).some(Boolean)));
+function hofPhone(){const md=['🥇 Champion','🥈 Runner-up','🥉 Third place'];return S.cats.filter(c=>S.M.some(m=>m.cat===c.id)).map(c=>{const pd=podium(c),th=THEME[S.cats.indexOf(c)%THEME.length];return `<div class="card"><div class="hfph" style="background:${th}">${esc(c.name)}</div>${pd.map((x,j)=>`<div class="hfr"><span>${md[j]}</span><div class="hfv">${x?fmt(x):'<span class="mu">to be decided</span>'}</div></div>`).join('')}</div>`}).join('')||'<p class="mu">No results yet.</p>'}
 const qrHTML=(D,pos)=>`<div class="qrc" style="right:30px;${pos||'bottom:74px'};width:${Math.round((D.W-80)/3)}px"><img src="${IMG.qr}"><div><b>SCAN TO VIEW THE TOURNAMENT DASHBOARD</b><span>Live courts, next matches, brackets and your own match</span></div></div>`;
 function tvR(D){const L=remItems(),n=L.reduce((a,x)=>a+x.length,0)+1,Wt=Math.round(D.W*.6),Ha=D.H-LEG-240,fs=Math.max(22,Math.min(40,Math.floor(Math.sqrt(.62*Wt*Ha/(.8*n)))));
  return{W:D.W,H:D.H,h:`<img class="art" src="${IMG.wave}" style="left:0;top:${Math.max(0,D.H-D.W*.3335)}px;width:${D.W}px"><div class="bn" style="${bnBg('#0d47a1')};width:${D.W}px">${logo()}${SH} REMINDERS FOR PLAYERS ${SH}<span>${clock()}</span></div><div class="rem" style="width:${Wt}px;font-size:${fs}px">${L.map((x,i)=>`<div class="ri"><span>${i+1}</span><p>${esc(x)}</p></div>`).join('')}</div>${qrHTML(D,'top:140px')}${legendTV(D.W,D.H)}`}}
@@ -338,20 +362,45 @@ function brTV(){const cs=S.cats.filter(c=>S.M.some(m=>m.cat===c.id));if(!cs.leng
  const c=cs.find(c=>c.id===bc)||cs[0],o=tvB(c,S.cats.indexOf(c),[c],false);
  return `<div class="chips">${cs.map(x=>`<button class="${x===c?'on':''}" onclick="bc='${x.id}';render()">${esc(x.name)}</button>`).join('')}</div><div id="pw" style="position:relative;overflow-x:auto;overflow-y:hidden">${fitHTML(o)}</div>`}
 function fitView(){const f=$('#fit'),w=$('#pw');if(!f||!w)return;const W=+f.dataset.w,H=+f.dataset.h,k=Math.max(.5,Math.min(1,w.clientWidth/W));f.style.transform=`scale(${k})`;f.style.left='0';f.style.top='0';w.style.height=H*k+'px'}
-async function pull(){try{const r=await fetch('data.json?t='+Date.now());if(!r.ok)return;const z=S.tvz;S=await r.json();if(TVV&&z!=null)S.tvz=z;if(view==='tv'||!document.activeElement.matches('input,textarea,select'))render()}catch(e){}}
+async function loadInfo(){try{const r=await fetch('info.json?t='+Date.now());if(r.ok){const j=await r.json();INFO=j.info||[];S.info=INFO}}catch(e){}}
+async function pull(){try{const r=await fetch('data.json?t='+Date.now());if(!r.ok)return;const z=S.tvz;S=await r.json();if(TVV&&z!=null)S.tvz=z;if(INFO)S.info=INFO;if(view==='tv'||!document.activeElement.matches('input,textarea,select'))render()}catch(e){}}
+const planOf=()=>{const p=S.plan||{},tm=v=>{const m=String(v||'').match(/(\d+):(\d+)/);return m?+m[1]*60+ +m[2]:null};return{start:tm(p.start||'13:00'),end:tm(p.end||'17:00'),courts:String(p.courts==null?'7,9,7,6,2':p.courts).split(/[ ,]+/).filter(Boolean).map(Number),avg:+p.avg||20}};
+const hm=x=>{x=Math.round(x);return String(Math.floor(x/60)%24).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
+function paceHTML(){const R=S.M.filter(m=>m.wo!=='bye');if(!R.length)return'';const P=planOf(),d=new Date(),nm=d.getHours()*60+d.getMinutes()+d.getSeconds()/60;
+ const total=R.length,done=R.filter(m=>m.st==='done').length,playing=R.filter(m=>m.st==='court').length,rem=total-done,pct=Math.round(done/total*100);
+ const ds=R.filter(m=>m.st==='done'&&!m.wo&&m.t&&m.end).map(m=>(m.end-m.t)/60000).filter(x=>x>1&&x<90),meas=ds.length>=4,avg=meas?ds.reduce((a,b)=>a+b,0)/ds.length:P.avg;
+ const mc=S.courts.filter(c=>c.open&&!c.pr).length,pc=S.courts.filter(c=>c.open&&c.pr).length,openN=S.courts.filter(c=>c.open).length;
+ const work=R.filter(m=>m.st==='wait').length*avg+R.filter(m=>m.st==='court').reduce((a,m)=>a+Math.max(2,avg-(Date.now()-m.t)/60000),0),thr=work/Math.max(1,mc);
+ const depth=Math.max(0,...R.filter(m=>m.st!=='done').map(m=>m.pre?m.R+1:m.bronze?1:m.R-m.r)),cp=depth?depth*avg+(depth-1)*S.rest:0,base=Math.max(nm,P.start),proj=base+Math.max(thr,cp);
+ const tot=P.courts.reduce((a,b)=>a+b,0),used=P.courts.reduce((a,c,i)=>a+c*Math.min(1,Math.max(0,(nm-P.start-60*i)/60)),0),left=tot?Math.max(0,Math.round(100-used/tot*100)):0;
+ let st='',cls='st-ok',tip='';
+ if(!rem){st='All matches finished';tip='Time for the closing ceremony.'}
+ else if(nm<P.start){st='Starts at '+hm(P.start);cls=''}
+ else{const diff=proj-P.end;st=diff<=0?'On track':diff<=15?'Tight':'Behind';cls=diff<=0?'st-ok':diff<=15?'st-tight':'st-bad';
+  const need=Math.ceil(work/Math.max(5,P.end-nm)),extra=need-mc;
+  if(diff>0&&cp>=thr)tip='Waiting on bracket rounds, so more courts will not help. Keep matches moving and keep warm-ups short.';
+  else if(extra>0)tip=pc?'Switch '+Math.min(extra,pc)+' practice court(s) to matches.':'No practice courts left to switch. Consider shorter warm-ups or opening one more court.';
+  else if(mc-Math.max(need,2)>=1&&pc+mc>0&&diff<=0)tip='You could release '+(mc-Math.max(need,2))+' court(s) for practice if the rounds allow.';
+  else tip='Pace looks fine.'}
+ const h=Math.floor((nm-P.start)/60),pl=P.courts[h],nx=P.courts[h+1],toNext=P.start+60*(h+1)-nm;let rem2='';
+ if(nm>=P.start&&pl!=null&&pl!==openN)rem2=`<p class="st-tight">Plan for this hour: ${pl} courts booked. You have ${openN} open.</p>`;
+ if(nm>=P.start&&nx!=null&&toNext<=10&&nx!==pl)rem2+=`<p class="st-tight">At ${hm(P.start+60*(h+1))} the plan changes to ${nx} courts.</p>`;
+ return `<div class="pace"><div class="card"><b>Matches</b><div class="bar"><i style="width:${pct}%"></i></div><p>${done} of ${total} done (${pct}%)</p><p class="mu">${playing} playing, ${rem-playing} waiting</p></div>
+ <div class="card"><b>Court hours</b><div class="bar"><i style="width:${100-left}%"></i></div><p>${left}% left (plan ends ${hm(P.start+60*P.courts.length)})</p><p class="mu">Average match ${Math.round(avg)} min (${meas?'measured, '+ds.length+' matches':'from the plan'}). Match courts: ${mc}, practice: ${pc}.</p></div>
+ <div class="card"><b>Projected finish: ${rem?hm(proj):'-'}</b> <span class="${cls}">${st}</span><p class="mu">Target ${hm(P.end)}. Earliest possible ${rem?hm(base+cp):'-'}.</p><p>${tip}</p>${rem2}</div></div>`}
 function render(){const app=$('#app');document.body.className=view==='tv'?'tvm':'';
  if(view==='tv'){app.innerHTML=tvHTML();fitTV();return}
  const keep={};document.querySelectorAll('#app input[id^=s]').forEach(i=>keep[i.id]=i.value);
- const T=RO?[['courts','Courts'],['next','Next up'],['br','Brackets'],['tvb','Bracket (TV style)'],['info','Reminders'],['find','Find me']]:[['desk','Desk'],['br','Brackets'],['tvb','Bracket (TV style)'],['log','Data log'],['setup','Setup']];
+ const T=RO?[['courts','Courts'],['next','Next up'],['br','Brackets'],['tvb','Bracket (TV style)'],...(hofAvail()?[['hof','Hall of Fame']]:[]),['info','Info'],['find','Find me']]:[['desk','Desk'],['br','Brackets'],['tvb','Bracket (TV style)'],['info','Info preview'],['log','Data log'],['setup','Setup']];
  let h='<nav>'+T.map(t=>`<button class="${view===t[0]?'on':''}" onclick="view='${t[0]}';render()">${t[1]}</button>`).join('')+(RO?'':`<button onclick="openTV()">TV in new window</button><button onclick="view='tv';tvI=0;render();(document.documentElement.requestFullscreen||(()=>0)).call(document.documentElement)">TV in this window</button>`)+'</nav>';
  if(RO&&S.ts)h+=`<div class="mu">Updated ${new Date(S.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}. This page refreshes itself.</div>`;
- h+=({desk:deskHTML,setup:setupHTML,tvb:brTV,log:logHTML,info:infoHTML,courts:()=>courtsHTML(1),next:()=>nextHTML(1,20),br:()=>brHTML(RO),find:()=>`<input placeholder="Your name" value="${esc(q)}" oninput="q=this.value;document.getElementById('res').innerHTML=findHTML()"><div id="res">${findHTML()}</div>`})[view]();h+=legendBar();
+ h+=({desk:deskHTML,setup:setupHTML,tvb:brTV,log:logHTML,info:infoHTML,hof:hofPhone,courts:()=>practiceLine()+courtsHTML(1),next:()=>nextHTML(1,20),br:()=>brHTML(RO),find:()=>`<input placeholder="Your name" value="${esc(q)}" oninput="q=this.value;document.getElementById('res').innerHTML=findHTML()"><div id="res">${findHTML()}</div>`})[view]();h+=legendBar();
  app.innerHTML=h;fitView();for(const id in keep){const i=document.getElementById(id);if(i)i.value=keep[id]}}
 document.onkeydown=e=>{if(view!=='tv')return;if(e.key==='Escape'&&!TVW&&!TVV){view=RO?'courts':'desk';render()}if(e.key==='ArrowRight')tvS(1);if(e.key==='ArrowLeft')tvS(-1);if(e.key==='+'||e.key==='=')tvZ(.05);if(e.key==='-')tvZ(-.05)};
 onresize=()=>{fitTV();fitView()};
 addEventListener('storage',e=>{if(TVW&&e.key===KEY&&e.newValue){S=JSON.parse(e.newValue);render()}});
 setInterval(()=>{if(TVW)try{S=JSON.parse(localStorage.getItem(KEY))||S}catch(e){}
  if(view==='tv'){if(!tvP)tvI++;render()}else if(view!=='setup'&&!document.activeElement.matches('input,textarea,select'))render()},14000);
-if(RO&&!SNAP){pull();setInterval(pull,30000)}
+if(RO&&!SNAP){pull();loadInfo();setInterval(pull,30000);setInterval(loadInfo,600000)}
 render();
 </script></body></html>
